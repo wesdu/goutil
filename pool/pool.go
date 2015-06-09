@@ -230,3 +230,19 @@ func (p *Pool) put(c Conn, forceClose bool) error {
 	}
 }
 
+func (p *Pool) Close() error {
+	p.mu.Lock()
+	idle := p.idle
+	idle.Init()
+	p.closed = true
+	p.active -= idle.Len()
+	if p.cond != nil {
+		p.cond.Broadcast()
+	}
+	p.mu.Unlock()
+	for e := idle.Front(); e != nil; e = e.Next() {
+		e.Value.(idleConn).c.Close()
+	}
+	return nil
+}
+
