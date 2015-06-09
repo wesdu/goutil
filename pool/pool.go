@@ -123,7 +123,7 @@ func (pc *pooledConnection) ForceClose() error {
 
 type Pool struct {
 	Dial         func() (Conn, error)
-	TestOnBorrow func(c *Conn, t time.Time) error
+	TestOnBorrow func(c Conn, t time.Time) error
 	IdleTimeout  time.Duration
 	MaxIdle      int
 	MaxActive    int
@@ -171,7 +171,7 @@ func (p *Pool) get() (Conn, error) {
 			p.idle.Remove(e)
 			test := p.TestOnBorrow
 			p.mu.Unlock()
-			if test == nil || test(&ic.c, ic.t) == nil {
+			if test == nil || test(&pooledConnection{p: p, Conn: ic.c}, ic.t) == nil {
 				return ic.c, nil
 			}
 			ic.c.Close()
