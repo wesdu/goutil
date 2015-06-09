@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 	"fmt"
-	"errors"
-	"github.com/wesdu/goutil/pool"
+	//"errors"
+	"./pool"
 )
 
 func tcp_testserver() {
@@ -27,12 +27,14 @@ func tcp_testserver() {
 
 func newPool() *pool.Pool {
 	return &pool.Pool{
+		MaxIdle: 3,
 		IdleTimeout: 15 * time.Minute,
 		Dial: func() (pool.Conn, error) {
 			return pool.Dial("tcp", ":9999")
 		},
 		TestOnBorrow: func(c pool.Conn, t time.Time) error {
-			return errors.New("test")
+			fmt.Println("test on borrow")
+			return nil
 		},
 		Wait: true,
 	}
@@ -46,6 +48,7 @@ func main() {
 
 	pool := newPool()
 	if c, err := pool.Get(); err == nil {
+		fmt.Println("c", c)
 		c.WriteStringLine("hello world")
 		bb, err := c.ReadBytesLine()
 		if err == nil {
@@ -57,6 +60,7 @@ func main() {
 		fmt.Println(err)
 	}
 	if c, err := pool.Get(); err == nil {
+		fmt.Println("c", c)
 		c.WriteStringLine("hello world2")
 		bb, err := c.ReadBytesLine()
 		if err == nil {
