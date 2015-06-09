@@ -43,14 +43,14 @@ func Dial(network, address string) (Conn, error) {
 func (c *conn) ReadBytesLine() ([]byte, error) {
 	p, err := c.br.ReadSlice('\n')
 	if err == bufio.ErrBufferFull {
-		return nil, errors.New("long response line")
+		return nil, errors.New("pool: long response line")
 	}
 	if err != nil {
 		return nil, err
 	}
 	i := len(p) - 2
 	if i < 0 || p[i] != '\r' {
-		return nil, errors.New("bad response line terminator")
+		return nil, errors.New("pool: bad response line terminator")
 	}
 	return p[:i], nil
 }
