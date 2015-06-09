@@ -73,6 +73,10 @@ func (c *conn) ReadBytesLine() ([]byte, error) {
 func (c *conn) WriteStringLine(s string) error{
 	c.bw.WriteString(s)
 	_, err := c.bw.WriteString(CRLF)
+	if err != nil {
+		return err
+	}
+	err = c.bw.Flush()
 	return err
 }
 
