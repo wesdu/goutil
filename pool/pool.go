@@ -22,6 +22,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"fmt"
 )
 
 const (
@@ -172,6 +173,7 @@ func (p *Pool) get() (Conn, error) {
 
 		for e := p.idle.Front(); e != nil; e = e.Next() {
 			ic := e.Value.(idleConn)
+			fmt.Println(ic.c)
 			p.idle.Remove(e)
 			test := p.TestOnBorrow
 			p.mu.Unlock()
