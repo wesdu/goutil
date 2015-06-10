@@ -22,7 +22,6 @@ import (
 	"net"
 	"sync"
 	"time"
-	"fmt"
 )
 
 const (
@@ -32,16 +31,33 @@ const (
 type Conn interface {
 	Close() error
 	Err() error
-	ReadBytesLine () ([]byte, error)
+	ReadBytesLine() ([]byte, error)
 	WriteStringLine(string) error
 }
 
 type conn struct {
-	raw_c net.Conn
-	mu    sync.Mutex
-	err   error
-	br    *bufio.Reader
-	bw    *bufio.Writer
+	raw_c        net.Conn
+	mu           sync.Mutex
+	err          error
+	br           *bufio.Reader
+	bw           *bufio.Writer
+	writeTimeout time.Duration
+	readTimeout  time.Duration
+}
+
+func DialTimeout(network, address string, connectTimeout, readTimeout, writeTimeout time.Duration) (Conn, error) {
+	dialer := net.Dialer{Timeout: connectTimeout}
+	netConn, err := dialer.Dial(network, address)
+	if err != nil {
+		return nil, err
+	}
+	return &conn{
+		raw_c:        netConn,
+		bw:           bufio.NewWriter(netConn),
+		br:           bufio.NewReader(netConn),
+		readTimeout:  readTimeout,
+		writeTimeout: writeTimeout,
+	}, nil
 }
 
 func Dial(network, address string) (Conn, error) {
@@ -57,31 +73,53 @@ func Dial(network, address string) (Conn, error) {
 }
 
 func (c *conn) ReadBytesLine() ([]byte, error) {
-	p, err := c.br.ReadSlice('\n')
-	if err == bufio.ErrBufferFull {
-		return nil, errors.New("pool: long response line")
+	if c.readTimeout != 0 {
+		c.raw_c.SetReadDeadline(time.Now().Add(c.readTimeout))
 	}
-	if err != nil {
+	p, err := c.br.ReadSlice('\n')
+	if opErr, ok := err.(*net.OpError); ok {
+		if opErr.Timeout() {
+			return nil, c.fatal(err)
+		}else if opErr.Temporary() {
+			return nil, opErr
+		}
+	}
+	if c.fatal(err) != nil {
 		return nil, err
 	}
 	i := len(p) - 2
 	if i < 0 || p[i] != '\r' {
-		return nil, errors.New("pool: bad response line terminator")
+		err = errors.New("pool: bad response line terminator")
+		if c.fatal(err) != nil {
+			return nil, err
+		}
 	}
 	return p[:i], nil
 }
 
-func (c *conn) WriteStringLine(s string) error{
-	c.bw.WriteString(s)
-	_, err := c.bw.WriteString(CRLF)
-	if err != nil {
-		return err
+func (c *conn) WriteStringLine(s string) (err error) {
+	if c.writeTimeout != 0 {
+		c.raw_c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+	}
+	_, err = c.bw.WriteString(s)
+	if c.fatal(err) != nil {
+		return
+	}
+	_, err = c.bw.WriteString(CRLF)
+	if c.fatal(err) != nil {
+		return
 	}
 	err = c.bw.Flush()
-	return err
+	if c.fatal(err) != nil {
+		return
+	}
+	return nil
 }
 
 func (c *conn) fatal(err error) error {
+	if err == nil {
+		return nil
+	}
 	c.mu.Lock()
 	if c.err == nil {
 		c.err = err
@@ -147,9 +185,13 @@ func (p *Pool) release() {
 	}
 }
 
-func (p *Pool) Get() (Conn, error) {
+func (p *Pool) Get() (pc Conn, err error) {
 	c, err := p.get()
-	return &pooledConnection{p: p, Conn: c}, err
+	pc = &pooledConnection{
+		p:    p,
+		Conn: c,
+	}
+	return
 }
 
 func (p *Pool) get() (Conn, error) {
@@ -250,4 +292,3 @@ func (p *Pool) Close() error {
 	}
 	return nil
 }
-

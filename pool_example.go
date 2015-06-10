@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"time"
-	"fmt"
 	//"errors"
 	"./pool"
 )
@@ -19,59 +19,60 @@ func tcp_testserver() {
 			// handle error
 		}
 		go func() {
-			fmt.Println("server got:", conn)
-			fmt.Fprintf(conn, "hi\r\n")
+			for {
+				buf := make([]byte, 2048)
+				_, err := conn.Read(buf)
+				if err != nil {
+					fmt.Println("read from client err:", err)
+					break
+				}
+				fmt.Println("server got:", string(buf))
+				time.Sleep(50000 * time.Second)
+				fmt.Fprintf(conn, "PONG\r\n")
+			}
 		}()
 	}
 }
 
 func newPool() *pool.Pool {
 	return &pool.Pool{
-		MaxIdle: 3,
+		MaxIdle:     3,
 		IdleTimeout: 15 * time.Minute,
 		Dial: func() (pool.Conn, error) {
-			return pool.Dial("tcp", ":9999")
+			return pool.DialTimeout("tcp", ":9999", 5*time.Second, 5*time.Second, 5*time.Second)
 		},
 		TestOnBorrow: func(c pool.Conn, t time.Time) error {
-			fmt.Println("test on borrow")
 			return nil
 		},
 		Wait: true,
 	}
 }
 
-func main() {
-	done := make(chan bool)
-
-	go tcp_testserver()
-	time.Sleep(1 * time.Second)
-
-	pool := newPool()
+func client_ping(pool *pool.Pool, s string) {
 	if c, err := pool.Get(); err == nil {
-		fmt.Println("c", c)
-		c.WriteStringLine("hello world")
+		fmt.Println("pool.Get()", c)
+		err := c.WriteStringLine(s)
+		if err != nil {
+			fmt.Print("write to server error:", err)
+		}
+		fmt.Println("write to server:", s)
 		bb, err := c.ReadBytesLine()
 		if err == nil {
-			fmt.Println(string(bb))
+			fmt.Println("get from server:", string(bb))
 		}
 		c.Close()
-		fmt.Println(c)
 	} else {
-		fmt.Println(err)
+		fmt.Println("pool.Get() err:", err)
 	}
-	if c, err := pool.Get(); err == nil {
-		fmt.Println("c", c)
-		c.WriteStringLine("hello world2")
-		bb, err := c.ReadBytesLine()
-		if err == nil {
-			fmt.Println(string(bb))
-		}
-		c.Close()
-	}else{
-		fmt.Println(err)
-	}
-	fmt.Println(pool)
-
-	<-done
 }
 
+
+func main() {
+	done := make(chan bool)
+	go tcp_testserver()
+	time.Sleep(1 * time.Second)
+	p := newPool()
+	client_ping(p, "PING1")
+	client_ping(p, "PING2")
+	<-done
+}
