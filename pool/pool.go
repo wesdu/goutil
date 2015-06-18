@@ -19,6 +19,7 @@ import (
 	"bufio"
 	"container/list"
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -36,6 +37,7 @@ type Conn interface {
 	WriteString(string) error
 	WriteBytes([]byte) error
 	Flush() error
+	Printf() error
 }
 
 type conn struct {
@@ -98,6 +100,11 @@ func (c *conn) ReadBytesLine() ([]byte, error) {
 		}
 	}
 	return p[:i], nil
+}
+
+func (c *conn) Printf(format string, a ...interface{}) error {
+	_, err := fmt.Fprintf(c.bw, format, a...)
+	return err
 }
 
 func (c *conn) WriteBytes(p []byte) error {
