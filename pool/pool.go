@@ -97,6 +97,23 @@ func (c *conn) ReadBytesLine() ([]byte, error) {
 	return p[:i], nil
 }
 
+func (c *conn) WriteBytes(p []byte) error{
+	_, err := c.bw.Write(p)
+	return err
+}
+
+func (c *conn) WriteString(s string) error{
+	_, err := c.bw.WriteString(s)
+	return err
+}
+
+func (c *conn) Flush() error{
+	if c.writeTimeout != 0 {
+		c.raw_c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+	}
+	return c.bw.Flush()
+}
+
 func (c *conn) WriteStringLine(s string) (err error) {
 	if c.writeTimeout != 0 {
 		c.raw_c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
