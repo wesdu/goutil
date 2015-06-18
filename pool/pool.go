@@ -33,6 +33,9 @@ type Conn interface {
 	Err() error
 	ReadBytesLine() ([]byte, error)
 	WriteStringLine(string) error
+	WriteString(string) error
+	WriteBytes([]byte) error
+	Flush() error
 }
 
 type conn struct {
@@ -80,7 +83,7 @@ func (c *conn) ReadBytesLine() ([]byte, error) {
 	if opErr, ok := err.(*net.OpError); ok {
 		if opErr.Timeout() {
 			return nil, c.fatal(err)
-		}else if opErr.Temporary() {
+		} else if opErr.Temporary() {
 			return nil, opErr
 		}
 	}
@@ -97,17 +100,17 @@ func (c *conn) ReadBytesLine() ([]byte, error) {
 	return p[:i], nil
 }
 
-func (c *conn) WriteBytes(p []byte) error{
+func (c *conn) WriteBytes(p []byte) error {
 	_, err := c.bw.Write(p)
 	return err
 }
 
-func (c *conn) WriteString(s string) error{
+func (c *conn) WriteString(s string) error {
 	_, err := c.bw.WriteString(s)
 	return err
 }
 
-func (c *conn) Flush() error{
+func (c *conn) Flush() error {
 	if c.writeTimeout != 0 {
 		c.raw_c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
 	}
