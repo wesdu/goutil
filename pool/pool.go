@@ -37,7 +37,7 @@ type Conn interface {
 	WriteString(string) error
 	WriteBytes([]byte) error
 	Flush() error
-	Printf() error
+	Printf(string, ...interface{}) error
 }
 
 type conn struct {
