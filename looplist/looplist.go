@@ -21,6 +21,10 @@ func NewLoopList(_cap int) *LoopList {
 	return l
 }
 
+func (l *LoopList) Len() int{
+	return len(l.List)
+}
+
 func (l *LoopList) Append(value interface{}) {
 	list_length := len(l.List)
 	el := &Element{
