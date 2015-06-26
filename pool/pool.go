@@ -40,6 +40,8 @@ type Conn interface {
 	WriteBytes([]byte) error
 	Flush() error
 	Printf(string, ...interface{}) error
+	BufReader() *bufio.Reader
+	BufWriter() *bufio.Writer
 }
 
 type conn struct {
@@ -77,6 +79,14 @@ func Dial(network, address string) (Conn, error) {
 		bw:    bufio.NewWriter(netConn),
 		br:    bufio.NewReader(netConn),
 	}, nil
+}
+
+func (c *conn) BufReader() *bufio.Reader{
+	return c.br
+}
+
+func (c *conn) BufWriter() *bufio.Writer{
+	return c.bw
 }
 
 func (c *conn) Read(p []byte) (n int, err error) {
