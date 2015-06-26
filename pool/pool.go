@@ -33,6 +33,8 @@ type Conn interface {
 	Close() error
 	Err() error
 	ReadBytesLine() ([]byte, error)
+	Read(p []byte) (n int, err error) //Reader
+	Write(p []byte) (n int, err error) //Writer
 	WriteStringLine(string) error
 	WriteString(string) error
 	WriteBytes([]byte) error
@@ -75,6 +77,14 @@ func Dial(network, address string) (Conn, error) {
 		bw:    bufio.NewWriter(netConn),
 		br:    bufio.NewReader(netConn),
 	}, nil
+}
+
+func (c *conn) Read(p []byte) (n int, err error) {
+	return c.raw_c.Read(p)
+}
+
+func (c *conn) Write(p []byte) (n int, err error) {
+	return c.raw_c.Write(p)
 }
 
 func (c *conn) ReadBytesLine() ([]byte, error) {
