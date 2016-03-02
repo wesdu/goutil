@@ -36,13 +36,13 @@ func melt_snowflakeid(snowflakeid int64) (int64, int64, int64) {
 
 func snowflake_maxid() int64 {
 	var _max int64
-	_max = (max_timestamp - 1)<<process_id_bits<<sequence_id_bits
-	_max += (max_process_id - 1)<<sequence_id_bits
+	_max = (max_timestamp - 1) << process_id_bits << sequence_id_bits
+	_max += (max_process_id - 1) << sequence_id_bits
 	_max += max_sequence_id - 1
 	return _max
 }
 
-func snowflake_expire_date() time.Time{
+func snowflake_expire_date() time.Time {
 	return time.Unix((max_timestamp-1+twepoch)/1000, 0)
 }
 
