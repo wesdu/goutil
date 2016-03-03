@@ -228,8 +228,8 @@ func GetGenerator(namespace string) *SnowFlakeCloud {
 			lock_path:    LOCK_PATH + namespace,
 		}
 		sfc.Init()
-		_sfc_map[namespace] = sfc
 		sfc.register()
+		_sfc_map[namespace] = sfc
 		return sfc
 	}
 }
