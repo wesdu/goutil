@@ -215,13 +215,11 @@ func Setup(zk_hosts string) {
 }
 
 func GetGenerator(namespace string) *SnowFlakeCloud {
-	//if in the map return
-	//else create a new one
 	global_lock.Lock()
 	defer global_lock.Unlock()
-	if sfc, exist := _sfc_map[namespace]; exist {
+	if sfc, exist := _sfc_map[namespace]; exist { //if in the map then return
 		return sfc
-	} else {
+	} else { //else create a new one
 		sfc = &SnowFlakeCloud{
 			zk_namespace: namespace,
 			node_path:    NODE_PATH + namespace,
