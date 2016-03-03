@@ -12,5 +12,5 @@ func main() {
 	for i:=0;i<1000000;i++ {
 		go fmt.Println(g.Gen(), i)
 	}
-	time.Sleep(1*time.Second)
+	time.Sleep(3*time.Second)
 }
