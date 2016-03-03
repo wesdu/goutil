@@ -104,18 +104,18 @@ func (c *conn) ReadBytesLine() ([]byte, error) {
 	p, err := c.br.ReadSlice('\n')
 	if opErr, ok := err.(*net.OpError); ok {
 		if opErr.Timeout() {
-			return nil, c.fatal(err)
+			return nil, c.Fatal(err)
 		} else if opErr.Temporary() {
 			return nil, opErr
 		}
 	}
-	if c.fatal(err) != nil {
+	if c.Fatal(err) != nil {
 		return nil, err
 	}
 	i := len(p) - 2
 	if i < 0 || p[i] != '\r' {
 		err = errors.New("pool: bad response line terminator")
-		if c.fatal(err) != nil {
+		if c.Fatal(err) != nil {
 			return nil, err
 		}
 	}
@@ -149,21 +149,21 @@ func (c *conn) WriteStringLine(s string) (err error) {
 		c.raw_c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
 	}
 	_, err = c.bw.WriteString(s)
-	if c.fatal(err) != nil {
+	if c.Fatal(err) != nil {
 		return
 	}
 	_, err = c.bw.WriteString(CRLF)
-	if c.fatal(err) != nil {
+	if c.Fatal(err) != nil {
 		return
 	}
 	err = c.bw.Flush()
-	if c.fatal(err) != nil {
+	if c.Fatal(err) != nil {
 		return
 	}
 	return nil
 }
 
-func (c *conn) fatal(err error) error {
+func (c *conn) Fatal(err error) error {
 	if err == nil {
 		return nil
 	}
