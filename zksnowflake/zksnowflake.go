@@ -198,7 +198,7 @@ func (sfc *SnowFlakeCloud) Gen() int64 {
 func Setup(zk_hosts string) {
 	global_lock.Lock()
 	defer global_lock.Unlock()
-	//only execute once
+	//Though can be imported many times, but only execute once
 	if _zk_hosts != "" {
 		log.Println("zookeeper already setup", _zk_hosts, _zk_conn)
 		return
