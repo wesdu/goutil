@@ -97,9 +97,17 @@ func (c *conn) Write(p []byte) (n int, err error) {
 	return c.raw_c.Write(p)
 }
 
+func (c *conn) SetReadDeadline(t time.Time) {
+	c.raw_c.SetReadDeadline(t)
+}
+
+func (c *conn) SetWriteDeadline(t time.Time) {
+	c.raw_c.SetWriteDeadline(t)
+}
+
 func (c *conn) ReadBytesLine() ([]byte, error) {
 	if c.readTimeout != 0 {
-		c.raw_c.SetReadDeadline(time.Now().Add(c.readTimeout))
+		c.SetReadDeadline(time.Now().Add(c.readTimeout))
 	}
 	p, err := c.br.ReadSlice('\n')
 	if opErr, ok := err.(*net.OpError); ok {
@@ -139,14 +147,14 @@ func (c *conn) WriteString(s string) error {
 
 func (c *conn) Flush() error {
 	if c.writeTimeout != 0 {
-		c.raw_c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+		c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
 	}
 	return c.bw.Flush()
 }
 
 func (c *conn) WriteStringLine(s string) (err error) {
 	if c.writeTimeout != 0 {
-		c.raw_c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+		c.SetWriteDeadline(time.Now().Add(c.writeTimeout))
 	}
 	_, err = c.bw.WriteString(s)
 	if c.Fatal(err) != nil {
