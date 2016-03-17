@@ -33,7 +33,7 @@ type Conn interface {
 	Close() error
 	Err() error
 	ReadBytesLine() ([]byte, error)
-	Read(p []byte) (n int, err error) //Reader
+	Read(p []byte) (n int, err error)  //Reader
 	Write(p []byte) (n int, err error) //Writer
 	WriteStringLine(string) error
 	WriteString(string) error
@@ -42,6 +42,8 @@ type Conn interface {
 	Printf(string, ...interface{}) error
 	BufReader() *bufio.Reader
 	BufWriter() *bufio.Writer
+	SetReadDeadline(t time.Time)
+	SetWriteDeadline(t time.Time)
 }
 
 type conn struct {
@@ -81,11 +83,11 @@ func Dial(network, address string) (Conn, error) {
 	}, nil
 }
 
-func (c *conn) BufReader() *bufio.Reader{
+func (c *conn) BufReader() *bufio.Reader {
 	return c.br
 }
 
-func (c *conn) BufWriter() *bufio.Writer{
+func (c *conn) BufWriter() *bufio.Writer {
 	return c.bw
 }
 
