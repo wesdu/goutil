@@ -26,7 +26,6 @@ const (
 )
 
 var (
-	_zk_hosts   string
 	_zk_conn    *zk.Conn
 	_sfc_map    map[string]*SnowFlakeCloud
 	global_lock sync.RWMutex
@@ -176,7 +175,7 @@ func (sfc *SnowFlakeCloud) register() {
 			}
 		}
 	}
-	log.Println("process_id", pid)
+	log.Println("zksnowflake process_id", pid)
 	_, err = _zk_conn.Create(sfc.node_path+"/"+strconv.FormatInt(pid, 10),
 		[]byte{1}, zk.FlagEphemeral,
 		zk.WorldACL(zk.PermAll),
@@ -195,23 +194,28 @@ func (sfc *SnowFlakeCloud) Gen() int64 {
 	return sfc.sf.gen()
 }
 
-func Setup(zk_hosts string) {
+func Setup(zk_config interface{}) {
 	global_lock.Lock()
 	defer global_lock.Unlock()
-	//Though can be imported many times, but only execute once
-	if _zk_hosts != "" {
-		log.Println("zookeeper already setup", _zk_hosts, _zk_conn)
+	if _zk_conn != nil {
+		log.Println("zookeeper already setup", _zk_conn)
 		return
 	}
-	_zk_hosts = zk_hosts
-	log.Println("set zookeeper hosts:", zk_hosts)
-	z, _, err := zk.Connect(strings.Split(_zk_hosts, ","), time.Second) //*10)
-	if err != nil {
-		log.Panicln("zookeeper fail", err)
-	} else {
-		log.Println("zookeeper connected")
+	//Though can be imported many times, but only execute once
+	if __zk_config, ok := zk_config.(string); ok {
+		log.Println("set zookeeper hosts:", __zk_config)
+		z, _, err := zk.Connect(strings.Split(__zk_config, ","), time.Second) //*10)
+		if err != nil {
+			log.Panicln("zookeeper fail", err)
+		} else {
+			log.Println("zookeeper connected")
+		}
+		_zk_conn = z
+	} else if __zk_conn, ok := zk_config.(*zk.Conn); ok {
+		log.Println("set zookeeper:", __zk_conn)
+		_zk_conn = __zk_conn
 	}
-	_zk_conn = z
+
 }
 
 func GetGenerator(namespace string) *SnowFlakeCloud {
