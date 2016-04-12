@@ -74,7 +74,6 @@ func tcp_testserver() {
 
 func newPool() *pool.Pool {
 	return &pool.Pool{
-		MaxIdle:     10000,
 		MaxActive:   100,
 		IdleTimeout: 15 * time.Minute,
 		Dial: func() (pool.Conn, error) {
@@ -89,8 +88,8 @@ func newPool() *pool.Pool {
 func client_ping(pool *pool.Pool, s string) {
 	n := 0
 	for {
-		if n > 3 {
-			return
+		if n > 1 {
+			//return
 		}
 		if c, err := pool.Get(); err == nil {
 			printGreen(0)
