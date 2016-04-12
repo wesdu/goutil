@@ -262,7 +262,6 @@ func (p *Pool) get() (Conn, error) {
 				break
 			}
 			p.idle.Remove(e)
-			p.release()
 			p.mu.Unlock()
 			ic.c.Close()
 			p.mu.Lock()
@@ -275,6 +274,7 @@ func (p *Pool) get() (Conn, error) {
 			ic := e.Value.(idleConn)
 			p.idle.Remove(e)
 			test := p.TestOnBorrow
+			p.active += 1
 			p.mu.Unlock()
 			if test == nil || test(&pooledConnection{p: p, Conn: ic.c}, ic.t) == nil {
 				return ic.c, nil
@@ -320,11 +320,14 @@ func (p *Pool) put(c Conn, forceClose bool) error {
 	p.mu.Lock()
 	if !p.closed && err == nil && !forceClose {
 		p.idle.PushFront(idleConn{t: time.Now(), c: c})
+		/*
 		if p.idle.Len() > p.MaxIdle {
 			c = p.idle.Remove(p.idle.Back()).(idleConn).c
 		} else {
 			c = nil
 		}
+		*/
+		c = nil
 	}
 	p.release()
 	p.mu.Unlock()
