@@ -32,6 +32,7 @@ const (
 type Conn interface {
 	Close() error
 	Err() error
+	Fatal(error) error
 	ReadBytesLine() ([]byte, error)
 	Read(p []byte) (n int, err error)  //Reader
 	Write(p []byte) (n int, err error) //Writer
