@@ -3,6 +3,7 @@ package main
 import (
 	"./pool"
 	"bufio"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -75,7 +76,7 @@ func tcp_testserver() {
 func newPool() *pool.Pool {
 	return &pool.Pool{
 		MaxActive:   100,
-		IdleTimeout: 15 * time.Minute,
+		IdleTimeout: 1 * time.Minute,
 		Dial: func() (pool.Conn, error) {
 			printBlue(0)
 			return pool.DialTimeout("tcp", "0.0.0.0:8888", 5*time.Second, 5*time.Second, 5*time.Second)
@@ -94,23 +95,27 @@ func client_ping(pool *pool.Pool, s string) {
 		if c, err := pool.Get(); err == nil {
 			printGreen(0)
 			err := c.WriteStringLine(s)
-			if err != nil {
+			if rand.Intn(10) == 5 {
+				err = errors.New("fake error")
+			}
+			if c.Fatal(err) != nil {
 				printRed(3)
 				printRed(err)
-			}
-			_, err = c.ReadBytesLine()
-			if err == nil {
-				printYellow(0)
 			} else {
-				printRed(4)
-				printRed(err)
+				_, err = c.ReadBytesLine()
+				if c.Fatal(err) != nil {
+					printRed(4)
+					printRed(err)
+				} else {
+					printYellow(0)
+				}
 			}
 			c.Close()
 		} else {
 			printRed(2)
 			printRed(err)
 		}
-		n ++
+		n++
 		time.Sleep(time.Duration(rand.Intn(10)+1) * time.Second)
 	}
 
