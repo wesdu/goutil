@@ -212,7 +212,7 @@ func Setup(zk_config interface{}) {
 		}
 		_zk_conn = z
 	} else if __zk_conn, ok := zk_config.(*zk.Conn); ok {
-		log.Println("set zookeeper:", __zk_conn)
+		// log.Println("set zookeeper:", __zk_conn)
 		_zk_conn = __zk_conn
 	}
 
