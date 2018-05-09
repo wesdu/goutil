@@ -198,7 +198,7 @@ func Setup(zk_config interface{}) {
 	global_lock.Lock()
 	defer global_lock.Unlock()
 	if _zk_conn != nil {
-		log.Println("zookeeper already setup", _zk_conn)
+		//log.Println("zookeeper already setup", _zk_conn)
 		return
 	}
 	//Though can be imported many times, but only execute once
